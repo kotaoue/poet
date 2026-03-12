@@ -4,7 +4,7 @@ The Brainhack
 
 ## Result
 
-* [https://kotaoue.github.io/brainhack/](https://kotaoue.github.io/brainhack/)
+* [https://kotaoue.github.io/poet/brainhack/](https://kotaoue.github.io/poet/brainhack/)
 
 ![Brain visualization](docs/screenshot.png)
 
