@@ -6,6 +6,7 @@
 
 ```shell
 marp main.md;open main.html
+marp --allow-local-files --pdf main.md
 ```
 
 ## Reference
