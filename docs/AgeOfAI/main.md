@@ -131,7 +131,7 @@ style: |
 ---
 
 <!-- _class: title-center -->
-# AIと「ハンドル握るのはどっち？」を話してたと思ってたら、全然違う話になってた件
+# わからなくて良いなら、わからなきゃだめなの？
 
 [kotaoue](https://github.com/kotaoue)
 
