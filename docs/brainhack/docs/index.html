@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>three.js webgl - STL</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+	<link rel="preconnect" href="https://fonts.gstatic.com">
+	<link href="https://fonts.googleapis.com/css2?family=Sawarabi+Mincho&display=swap" rel="stylesheet">
+</head>
+
+<body>
+	<div id="slide"></div>
+	<script type="module">
+		import * as THREE from './build/three.module.js';
+		import Stats from './jsm/libs/stats.module.js';
+		import { STLLoader } from './jsm/loaders/STLLoader.js';
+
+		let container, stats;
+		let camera, cameraTarget, scene, renderer;
+		let group;
+		let cameraLength = 15;
+
+		let move = { current: 0, increment: 0.02 };
+
+		let contents = [
+			{ title: '🐓脳を改造して<br>楽しく仕事する💕' },
+			{ content: 'ミーティング後スイッチが入らない<br>昼ごはん食べたらおやつ食べたくなる<br>深夜メンテで寝落ち' },
+			{ content: 'まずは脳改造😁' },
+			{ content: 'その①<br>頑張ってシゴトする' },
+			{ content: 'シゴトする→終わらせる→キモチイイ👌' },
+			{ content: '楽しくなってくる！💖' },
+			{ content: 'その②<br>イケナイコトをする' },
+			{ content: '昼めしの時間削って…<br>今日は予定があるから上がるつもりが…<br>退勤したけどもうちょっと…' },
+			{ content: 'もっと楽しくなってくる！！💖' },
+			{ content: 'その③<br>場所を拡張する' },
+			{ content: '電車の中<br>風呂の中<br>お布団の中' },
+			{ content: 'とっても楽しくなってくる！！！💖' },
+			{ content: '仕事依存症のできあがり！💯' },
+			{ content: '注意点' },
+			{ content: 'もどせない' },
+			{ link: 'https://github.com/kotaoue/brainhack' },
+		];
+		let page = { current: 0, total: contents.length - 1 };
+		init();
+		animate();
+		slides();
+
+		function init() {
+			// Add Container.
+			container = document.createElement('div');
+			document.body.appendChild(container);
+
+			// Add Camera.
+			camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 20);
+			cameraTarget = new THREE.Vector3(0, 0, 0);
+
+			// Add Scene.
+			scene = new THREE.Scene();
+			scene.background = new THREE.Color(0x0000);
+
+			// Add Model.
+			addModel(scene);
+
+			// Renderer
+			renderer = new THREE.WebGLRenderer({ antialias: true });
+			renderer.setPixelRatio(window.devicePixelRatio);
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			renderer.outputEncoding = THREE.sRGBEncoding;
+			renderer.shadowMap.enabled = true;
+
+			container.appendChild(renderer.domElement);
+
+			// Add EvnetListner.
+			window.addEventListener('resize', onWindowResize, false);
+			document.addEventListener('keydown', onKeyDown);
+		}
+
+		function addModel(scene) {
+			// add brain
+			const loader = new STLLoader();
+			loader.load('./models/EGJ_brain.stl', function (geometry) {
+				const material = new THREE.MeshNormalMaterial();
+				const mesh = new THREE.Mesh(geometry, material);
+
+				mesh.position.set(0, 0, 0);
+				mesh.rotation.set(Math.PI / 2, Math.PI, 0);
+
+				const scale = 0.03;
+				mesh.scale.set(scale, scale, scale);
+
+				mesh.castShadow = true;
+				mesh.receiveShadow = true;
+
+				scene.add(mesh);
+			});
+
+			// add cube
+			group = new THREE.Group();
+			scene.add(group);
+
+			const material = new THREE.MeshNormalMaterial();
+			const geometry = new THREE.BoxGeometry(1, 1, 1);
+			const cubeLength = cameraLength / 3;
+			const cubeCount = 16;
+			const cubeAngle = 360 / cubeCount;
+			for (let i = 0; i < cubeCount; i++) {
+				const mesh = new THREE.Mesh(geometry, material);
+				mesh.position.set(cubeLength * Math.cos(radian(cubeAngle * i)), 0, cubeLength * Math.sin(radian(cubeAngle * i)));
+
+				const scale = 0.1;
+				mesh.scale.set(scale, scale, scale);
+
+				group.add(mesh);
+			}
+		}
+
+		function onWindowResize() {
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+
+			renderer.setSize(window.innerWidth, window.innerHeight);
+		}
+
+		function onKeyDown(event) {
+			const DOM_VK_J = 74;
+			const DOM_VK_K = 75;
+
+			if (event.keyCode === DOM_VK_K && page.current > 0) {
+				page.current--;
+				move.current = 0;
+				slides();
+			}
+			if (event.keyCode === DOM_VK_J && page.current < contents.length - 1) {
+				page.current++;
+				move.current = 0;
+				slides();
+			}
+		}
+
+		function animate() {
+			requestAnimationFrame(animate);
+			render();
+		}
+
+		function render() {
+			cameraMove();
+			groupMove();
+			renderer.render(scene, camera);
+
+			if ((move.current * move.increment) <= 1) {
+				move.current++;
+			}
+		}
+
+		function radian(angle) {
+			return angle * Math.PI / 180;
+		}
+
+		function cameraMove() {
+			const angle = 360 / page.total;
+			const beforeR = radian(page.current * angle)
+			const afterR = radian((page.current + 1) * angle)
+			const beforeX = cameraLength * Math.sin(beforeR);
+			const beforeZ = cameraLength * Math.cos(beforeR);
+			const afterX = cameraLength * Math.sin(afterR);
+			const afterZ = cameraLength * Math.cos(afterR);
+
+			const beforePos = new THREE.Vector3(beforeX, 0, beforeZ);
+			const afterPos = new THREE.Vector3(afterX, 0, afterZ);
+			camera.position.copy(beforePos.lerp(afterPos, move.current * move.increment));
+			camera.lookAt(cameraTarget);
+		}
+
+		function groupMove() {
+			const speed = 0.001;
+			group.rotation.x = group.rotation.x + (speed * (page.current % 2));
+			group.rotation.y = group.rotation.y + speed;
+			group.rotation.z = group.rotation.x + (speed * (page.current % 3));
+
+			const rotationMax = Math.PI * 2;
+			if (group.rotation.x < 0 || group.rotation.x > rotationMax) {
+				group.rotation.x = 0;
+			}
+			if (group.rotation.y < 0 || group.rotation.y >= rotationMax) {
+				group.rotation.y = 0;
+			}
+			if (group.rotation.z < 0 || group.rotation.z > rotationMax) {
+				group.rotation.z = 0;
+			}
+		}
+
+
+		function slides() {
+			let innerHTML = "";
+			const currentCountent = contents[page.current];
+			if ('title' in currentCountent) {
+				innerHTML += "<span>" + currentCountent.title + "</span>";
+			}
+			if ('content' in currentCountent) {
+				innerHTML += currentCountent.content;
+			}
+			if ('link' in currentCountent) {
+				innerHTML += "<a href='" + currentCountent.link + "'>" + currentCountent.link + "</a>";
+			}
+			document.getElementById("slide").innerHTML = innerHTML;
+		}
+	</script>
+</body>
+
+</html>
